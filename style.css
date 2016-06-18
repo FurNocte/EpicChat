@@ -1,0 +1,73 @@
+body {
+    background-color: #1C1C1C;
+}
+
+#input {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+#input input {
+    width: 90%;
+}
+
+#chat {
+    margin: 0;
+}
+
+#messages {
+    color: white;
+    font-weight: bold;
+    background-color: #2E2E2E;
+    padding: 1%;
+    overflow-y: scroll;
+    height: 600px;
+}
+
+#messages li {
+    list-style-type: none;
+    padding: 2px;
+    display: block;
+    background-color: #212121;
+}
+
+#messages li span {
+    vertical-align: top;
+}
+
+#header {
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.text {
+    display: inline-block;
+}
+
+.time {
+    font-weight: normal;
+    color: white;
+}
+
+#messages li:nth-child(odd) {
+    background: #424242;
+}
+
+.pseudo {
+    color: #048C79;
+}
+
+.server {
+    color: red;
+}
+
+.orange {
+    background-color: orange;
+}
+
+#listChan {
+    list-style-type: none;
+    color: #A4A4A4;
+}

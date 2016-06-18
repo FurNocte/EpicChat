@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Chat</title>
+        <link href="./bootstrap-3.3.6-dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="./style.css" rel="stylesheet">
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="./jquery.js"></script>
+        <script src="./script.js"></script>
+    </head>
+    <body onload="clock();">
+        <div id="header">
+            <span class="time"></span>
+            You are <span id='userPseudo'></span>
+        </div>
+        <div id="chat" class="row">
+            <div class="col-xs-10">
+                <ul id="messages">
+                </ul>
+                <div id="input">
+                    <input onkeypress="keyPress(event)" autocomplete="off" id="texteenvoi"/>
+                    <button onclick="sendMessage()">Envoi</button>
+                </div>
+            </div>
+            <div id="listChan"class="col-xs-2">
+            </div>
+        </div>
+    </body>
+</html>
