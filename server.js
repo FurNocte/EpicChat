@@ -1,6 +1,7 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var jsonfile = require('jsonfile');
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/client.html'); // Permet d'envoyer la ressource client.html quand on demande la racine du serveur
@@ -14,7 +15,7 @@ var pseudos = [];
 
 io.on('connection', function(socket){ // Lors de l'event 'connection' sur io on execute la fonction anonyme
     var id = socket.id;
-    pseudos[id] = 'Visiteur' + new Date().getTime();
+    pseudos[id] = 'Guest' + new Date().getTime();
     emitMsg(null, pseudos[id] + " is connected to the chat", 'server');
     emitToUser(id, 'config', {"func": "pseudo", "args": [pseudos[id]]}, 'server');
     emitToUser(id, 'chan_general', 'Welcome to the chat<br/>To see all commands type /help', 'server');
@@ -30,6 +31,7 @@ io.on('connection', function(socket){ // Lors de l'event 'connection' sur io on 
     });
     socket.on('disconnect', function() {
         emitMsg(null, pseudos[id] + " has just disconnect", 'server');
+        emitToUser(id, 'chan_general', 'You has been disconnected', 'server');
         delete pseudos[id];
     });
 });
@@ -50,13 +52,18 @@ function emitToUser(id, chan, text, user) {
     io.sockets.connected[id].emit(chan, {"time": new Date(), "pseudo": user, "message": text});
 }
 
+var passFile = './passwds.json';
+var passwds = [];
+readPasswd();
 var listCmd = {"help": ["/help Display the help", cmdhelp],
     "quit": ["/quit Disconnect you from server", cmdquit],
-    "nick": ["/nick &ltnewPseudo&gt Change your nickname", cmdnick],
+    "nick": ["/nick &ltnew nickname&gt [password] Change your nickname", cmdnick],
     "img": ["/img &lturl&gt Display an image", cmdimg],
-    "msg": ["/msg &ltpseudo&gt &ltmessage&gt Send a private message", cmdmsg],
+    "msg": ["/msg &ltnickname&gt &ltmessage&gt Send a private message", cmdmsg],
     "list": ["/list List all connected users", cmdlist],
-    "r": ["/r &ltmessage&gt Answer to the last user who wrote you", cmdr]};
+    "r": ["/r &ltmessage&gt Answer to the last user who wrote you", cmdr],
+    "svnick": ["/svnick &ltpassword&gt Save your current nickname with a password DB", cmdsvnick],
+    "rmnick": ["/rmnick &ltpassword&gt Remove your current nickname from password DB", cmdrmnick]};
 
 
 function msg2Ctr(msg, id, socket) {
@@ -84,14 +91,19 @@ function cmdhelp(ctr, id) {
 }
 
 function cmdquit(ctr, id, socket) {
-    emitMsg(null, 'You have been disconnected', 'server');
     socket.disconnect();
 }
 
 function cmdnick(ctr, id) {
-    emitMsg(null, pseudos[id] + " is now know as " + ctr.args[0], 'server');
-    pseudos[id] = ctr.args[0];
-    emitToUser(id, 'config', {"func": "pseudo", "args": [pseudos[id]]});
+    var passwd = passwds[ctr.args[0]];
+    console.log(passwd);
+    if (!passwd || passwd === ctr.args[1]) {
+        emitMsg(null, pseudos[id] + " is now know as " + ctr.args[0], 'server');
+        pseudos[id] = ctr.args[0];
+        emitToUser(id, 'config', {"func": "pseudo", "args": [pseudos[id]]});
+    } else {
+        emitToUser(id, 'chan_general', 'This nickname is protected by a password', 'server');
+    }
 }
 
 function cmdimg(ctr, id) {
@@ -132,4 +144,55 @@ function cmdlist(ctr, id) {
     for (user in pseudos)
         text = text.concat(pseudos[user] + '<br/>');
     emitToUser(id, null, text, 'server');
+}
+
+function cmdsvnick(ctr, id) {
+    addPasswd(pseudos[id], ctr.args[0]);
+}
+
+function cmdrmnick(ctr, id) {
+    if (ctr.args[0] === passwds[pseudos[id]])
+        removePasswd(pseudos[id]);
+}
+
+function addPasswd(pseudo, passwd) {
+    if (pseudo.substring(0, 5) === 'Guest')
+        return false;
+    for (key in passwds) {
+        if (key === pseudo) {
+            passwds[key] = passwd;
+            writePasswd();
+            return true;
+        }
+    }
+    passwds[pseudo] = passwd;
+    writePasswd();
+}
+
+function removePasswd(pseudo) {
+    if (pseudo.substring(0, 5) === 'Guest')
+        return false;
+    for (key in passwds) {
+        if (key === pseudo) {
+            delete passwds[key];
+            writePasswd();
+            return true;
+        }
+    }
+}
+
+function readPasswd() {
+    jsonfile.readFile(passFile, function(err, obj) {
+        if (err)
+            console.log(err);
+        else
+            passwds = obj;
+    });
+}
+
+function writePasswd() {
+    jsonfile.writeFile(passFile, passwds, function(err) {
+        if (err)
+            console.log(err);
+    });
 }
