@@ -96,7 +96,6 @@ function cmdquit(ctr, id, socket) {
 
 function cmdnick(ctr, id) {
     var passwd = passwds[ctr.args[0]];
-    console.log(passwd);
     if (!passwd || passwd === ctr.args[1]) {
         emitMsg(null, pseudos[id] + " is now know as " + ctr.args[0], 'server');
         pseudos[id] = ctr.args[0];
@@ -183,8 +182,14 @@ function removePasswd(pseudo) {
 
 function readPasswd() {
     jsonfile.readFile(passFile, function(err, obj) {
-        if (err)
+        if (err) {
             console.log(err);
+            if (err.errno === 34) {
+                passwds = {};
+                writePasswd();
+                readPasswd();
+            }
+        }
         else
             passwds = obj;
     });
