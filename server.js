@@ -42,7 +42,7 @@ function emitMsg(chan, text, user) {
         chan = 'chan_general';
     if (!user)
         user = 'server';
-    io.emit(chan, {"time": new Date(), "pseudo": "server", "message": text});
+    io.emit(chan, {"time": new Date(), "pseudo": user, "message": text});
 }
 
 function emitToUser(id, chan, text, user) {
