@@ -31,7 +31,6 @@ io.on('connection', function(socket){ // Lors de l'event 'connection' sur io on 
     });
     socket.on('disconnect', function() {
         emitMsg(null, pseudos[id] + " has just disconnect", 'server');
-        emitToUser(id, 'chan_general', 'You has been disconnected', 'server');
         delete pseudos[id];
     });
 });
@@ -91,6 +90,7 @@ function cmdhelp(ctr, id) {
 }
 
 function cmdquit(ctr, id, socket) {
+    emitToUser(id, 'chan_general', 'You has been disconnected', 'server');
     socket.disconnect();
 }
 
