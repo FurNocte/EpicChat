@@ -13,12 +13,14 @@ function add_message(msg) {
     $('#messages').scrollTop(99999);
 }
 
+notifierSet();
 socket.on('chan_general', add_message); // Ecoute l'évenement 'chan_general' sur socket pour déclencher la fonction add_message
 socket.on('config', function (msg) {
     if (msg.message.func === 'pseudo') {
         pseudo = msg.message.args[0];
         $('#userPseudo')[0].innerHTML = pseudo;
-    }
+    } else if (msg.message.func === 'notify')
+        notify(msg.message.args[0]);
 });
 socket.on('connect', function() {
     socketid = '/#' + socket.id;
@@ -51,4 +53,27 @@ function addChannel(chan, sschan) {
 function clock() {
     $('.time')[0].innerHTML = getTime();
     setTimeout(function() {clock();}, 1000);
+}
+
+function notify(type) {
+    if (Notification.permission === "granted") {
+        if (type === 'private') {
+            $.playSound('./glass_ping.mp3');
+            var notification = new Notification("New private message");
+        }
+        else if (type === 'public')
+            $.playSound('./Hitting_Metal.mp3');
+    }
+}
+
+function notifierSet() {
+  if (!("Notification" in window)) {
+    alert("Ce navigateur ne supporte pas les notifications desktop");
+  } else {
+    Notification.requestPermission(function (permission) {
+      if(!('permission' in Notification)) {
+        Notification.permission = permission;
+      }
+    });
+  }
 }

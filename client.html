@@ -6,12 +6,16 @@
         <link href="./style.css" rel="stylesheet">
         <script src="/socket.io/socket.io.js"></script>
         <script src="./jquery.js"></script>
+        <script src="./jquery_playsound.js"></script>
         <script src="./script.js"></script>
     </head>
     <body onload="clock();">
         <div id="header">
             <span class="time"></span>
             You are <span id='userPseudo'></span>
+            <span>
+                <img src='./vol_icon.png'/>
+            </span>
         </div>
         <div id="chat" class="row">
             <ul id="messages">

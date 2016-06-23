@@ -27,6 +27,11 @@ io.on('connection', function(socket){ // Lors de l'event 'connection' sur io on 
             msg.pseudo = pseudos[id];
             msg.time = new Date();
             io.emit('chan_general', msg);
+            var receivers = [];
+            for (user in pseudos)
+                if (user !== id)
+                    receivers.push(user);
+            notify(receivers, 'public');
         }
     });
     socket.on('disconnect', function() {
@@ -123,7 +128,9 @@ function cmdmsg(ctr, id) {
                     text = text.concat(ctr.args[mot] + ' ');
             emitToUser(uid, null, text, '&lt' + pseudos[id] + ' -> ' + pseudos[uid] + '&gt');
             emitToUser(id, null, text, '&lt' + pseudos[id] + ' -> ' + pseudos[uid] + '&gt');
+            notify([uid], 'private');
             lastSender[uid] = id;
+            break;
         }
 }
 
@@ -134,6 +141,7 @@ function cmdr(ctr, id) {
             text = text.concat(ctr.args[mot] + ' ');
         emitToUser(lastSender[id], null, text, '&lt' + pseudos[id] + ' -> ' + pseudos[lastSender[id]] + '&gt');
         emitToUser(id, null, text, '&lt' + pseudos[id] + ' -> ' + pseudos[lastSender[id]] + '&gt');
+        notify([lastSender[id]], 'private');
         lastSender[lastSender[id]] = id;
     }
 }
@@ -152,6 +160,11 @@ function cmdsvnick(ctr, id) {
 function cmdrmnick(ctr, id) {
     if (ctr.args[0] === passwds[pseudos[id]])
         removePasswd(pseudos[id]);
+}
+
+function notify(users, type) {
+    for (user in users)
+        emitToUser(users[user], 'config', {"func": "notify", "args": [type || 'public']}, 'server');
 }
 
 function addPasswd(pseudo, passwd) {
