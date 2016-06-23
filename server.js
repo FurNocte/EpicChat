@@ -21,6 +21,8 @@ io.on('connection', function(socket){ // Lors de l'event 'connection' sur io on 
     emitToUser(id, 'chan_general', 'Welcome to the chat<br/>To see all commands type /help', 'server');
     socket.on('chan_general', function(msg){ // Lors de l'event 'chan_general sur socket' on execute la fonction anonyme
         var id = socket.id;
+        if (msg.message.replace(/ /g, '').length<1)
+            return;
         if (msg.message[0] == '/')
             msg2Ctr(msg, id, socket);
         else {
@@ -126,6 +128,8 @@ function cmdmsg(ctr, id) {
             for (mot in ctr.args)
                 if (mot != 0)
                     text = text.concat(ctr.args[mot] + ' ');
+            if (text.replace(/ /g, '').length<1)
+                return;
             emitToUser(uid, null, text, '&lt' + pseudos[id] + ' -> ' + pseudos[uid] + '&gt');
             emitToUser(id, null, text, '&lt' + pseudos[id] + ' -> ' + pseudos[uid] + '&gt');
             notify([uid], 'private');
@@ -139,6 +143,8 @@ function cmdr(ctr, id) {
         var text = '';
         for (mot in ctr.args)
             text = text.concat(ctr.args[mot] + ' ');
+        if (text.replace(/ /g, '').length<1)
+            return;
         emitToUser(lastSender[id], null, text, '&lt' + pseudos[id] + ' -> ' + pseudos[lastSender[id]] + '&gt');
         emitToUser(id, null, text, '&lt' + pseudos[id] + ' -> ' + pseudos[lastSender[id]] + '&gt');
         notify([lastSender[id]], 'private');
