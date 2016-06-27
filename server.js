@@ -1,6 +1,7 @@
 var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var http = require('http');
+var httpServ = require('http').Server(app);
+var io = require('socket.io')(httpServ);
 var jsonfile = require('jsonfile');
 
 app.get('/', function(req, res){
@@ -18,7 +19,7 @@ io.on('connection', function(socket){ // Lors de l'event 'connection' sur io on 
     pseudos[id] = 'Guest' + new Date().getTime();
     emitMsg(null, pseudos[id] + " is connected to the chat", 'server');
     emitToUser(id, 'config', {"func": "pseudo", "args": [pseudos[id]]}, 'server');
-    emitToUser(id, 'chan_general', 'Welcome to the chat<br/>To see all commands type /help', 'server');
+    emitToUser(id, 'chan_general', 'Welcome to the chat<br/>To see all commands type /help', '&lt server -> ' + pseudos[id] + '&gt');
     socket.on('chan_general', function(msg){ // Lors de l'event 'chan_general sur socket' on execute la fonction anonyme
         var id = socket.id;
         if (msg.message.replace(/ /g, '').length<1)
@@ -42,7 +43,7 @@ io.on('connection', function(socket){ // Lors de l'event 'connection' sur io on 
     });
 });
 
-http.listen(8081);
+httpServ.listen(8081);
 
 function emitMsg(chan, text, user) {
     if (!chan)
@@ -69,7 +70,8 @@ var listCmd = {"help": ["/help Display the help", cmdhelp],
     "list": ["/list List all connected users", cmdlist],
     "r": ["/r &ltmessage&gt Answer to the last user who wrote you", cmdr],
     "svnick": ["/svnick &ltpassword&gt Save your current nickname with a password DB", cmdsvnick],
-    "rmnick": ["/rmnick &ltpassword&gt Remove your current nickname from password DB", cmdrmnick]};
+    "rmnick": ["/rmnick &ltpassword&gt Remove your current nickname from password DB", cmdrmnick],
+    "giphy": ["/giphy &ltkeyword&gt Take a random gif from Giphy", cmdgiphy]};
 
 
 function msg2Ctr(msg, id, socket) {
@@ -114,7 +116,7 @@ function cmdnick(ctr, id) {
 
 function cmdimg(ctr, id) {
     emitMsg(null,
-            '<a href="' + ctr.args[0] + '" target="_blank"><img style="max-width: 300px; max-height: 300px; cursor: pointer;" src="' + ctr.args[0] +'"/></a>',
+            '<a href="' + ctr.args[0] + '" target="_blank"><img style="width: 300px; cursor: pointer;" src="' + ctr.args[0] +'"/></a>',
             pseudos[id]);
 }
 
@@ -166,6 +168,30 @@ function cmdsvnick(ctr, id) {
 function cmdrmnick(ctr, id) {
     if (ctr.args[0] === passwds[pseudos[id]])
         removePasswd(pseudos[id]);
+}
+
+function cmdgiphy(ctr, id) {
+    if (ctr.args[0]) {
+        http.get({
+            hostname: 'api.giphy.com',
+            port: 80,
+            path: '/v1/stickers/random?api_key=dc6zaTOxFJmzC&tag=' + ctr.args[0],
+            agent: false
+        }, function(res) {
+            var str = '';
+            res.on('data', function (chunk) {
+                str += chunk;
+            });
+
+            res.on('end', function () {
+                ctr.args[0] = JSON.parse(str).data.image_original_url;
+                if (ctr.args[0])
+                    cmdimg(ctr, id);
+                else
+                    emitToUser(id, 'chan_general', 'No gif found in the Giphy database', '&lt server -> ' + pseudos[id] + '&gt');
+            });
+        });
+    }
 }
 
 function notify(users, type) {
